@@ -78,14 +78,7 @@ function find_and_add_entries()
         end
         return EXTENSIONS[string.lower(ext)]
     end)
-    table.sort(files, function (a, b)
-        local len = string.len(a) - string.len(b)
-        if len ~= 0 then -- case for ordering filename ending with such as X.Y.Z
-            local ext = string.len(get_extension(a)) + 1
-            return string.sub(a, 1, -ext) < string.sub(b, 1, -ext)
-        end
-        return string.lower(a) < string.lower(b)
-    end)
+    sortnicely(files)
 
     if dir == "." then
         dir = ""
@@ -136,6 +129,33 @@ function find_and_add_entries()
 
     add_files_at(pl_current + 1, append[1])
     add_files_at(pl_current, append[-1])
+end
+
+-- split a string into a table of number and string values
+function splitbynum(s)
+       local result = {}
+       for x, y in (s or ""):gmatch("(%d*)(%D*)") do
+               if x ~= "" then table.insert(result, tonumber(x)) end
+               if y ~= "" then table.insert(result, y) end
+       end
+       return result
+end
+
+-- compare two strings
+function alnumcomp(x, y)
+       local xt, yt = splitbynum(x), splitbynum(y)
+       for i = 1, math.min(#xt, #yt) do
+               local xe, ye = xt[i], yt[i]
+               if type(xe) == "string" then ye = tostring(ye)
+               elseif type(ye) == "string" then xe = tostring(xe) end
+               if xe ~= ye then return xe < ye end
+       end
+       return #xt < #yt
+end
+
+-- sort a given table of strings the way humans would expect
+function sortnicely(t)
+  return table.sort(t, alnumcomp)
 end
 
 mp.register_event("start-file", find_and_add_entries)
